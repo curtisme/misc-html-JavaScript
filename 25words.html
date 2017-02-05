@@ -1,0 +1,93 @@
+<!--This is a funny little thing, someone asked me to think of a way to display text
+such that chunks with more than 25 words get a 'show more' button. I'm sure there's
+an easier way-->
+
+<html>
+<head>
+<style>
+td {
+	width:200px;
+}
+</style>
+</head>
+<body>
+	<table border="1">
+		<tr>
+			<td>
+			stuff 1:
+			</td>
+			<td id="0">
+			sdgrsf
+			</td>
+		</tr>
+		<tr>
+			<td>
+			stuff 2:
+			</td>
+			<td id="1">
+			</td>
+		</tr>
+		<tr>
+			<td>
+			stuff 3:
+			</td>
+			<td id="2">
+			</td>
+		</tr>
+		<tr>
+			<td>
+			stuff 4:
+			</td>
+			<td id="3">
+			</td>
+		</tr>
+	</table>
+<script>
+var stuffs =["You know I just had a ridiculous thought. Suppose Jesus really existed, but was just a fairly regular dude who happened to be born with innate ability to not be a jerk (I as I think is the most plausible explanation at this point). Suppose who was alive these days, do ya reckon he would get sucked into Facebook?",
+"This is less than 25 words",
+"aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa aaa",
+"blah blah blah"
+];
+
+labels = ["Show more", "Show less"];
+
+for (var i=0;i<stuffs.length;i++) {
+	stuffs[i] = stuffs[i].split(" ");
+	var tmp = [];
+	if (stuffs[i].length > 25) {
+		tmp[0] = "";
+		for (var j=0;j<25;j++) {
+			tmp[0]+=stuffs[i][j]+" ";
+		}
+		tmp[0]+="...";
+	}
+	tmp[tmp.length] = "";
+	for (var j=0;j<stuffs[i].length;j++) {
+		tmp[tmp.length-1]+= stuffs[i][j]+" ";
+	}
+	stuffs[i] = tmp;
+	
+	var td = document.getElementById(i);
+	if (stuffs[i].length>1) {
+		td.innerHTML = "<p id='p"+i+"'>"+stuffs[i][0]+ "</p><br><button id='b"+i+"'>Show more.</button>";
+		stuffs[i][stuffs[i].length] = 0;
+		var b = document.getElementById("b"+i);
+		b.addEventListener("click",
+			function() {
+				var index = parseInt(this.id.slice(-1));
+				var p = document.getElementById("p"+index);
+				//I'm particularly proud of the next line:
+				p.innerHTML = stuffs[index][stuffs[index][2] = (stuffs[index][2]+1)%2];
+				this.innerHTML = labels[stuffs[index][2]];
+				
+			});
+	}
+	else {
+		td.innerHTML = "<p>"+tmp[0]+"</p>";
+	}
+	
+}
+
+</script>
+</body>
+</html>

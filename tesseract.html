@@ -1,0 +1,183 @@
+<html>
+<body style="text-align:center;">
+<canvas id="cMan" width="600" height="600"></canvas>
+<script>
+/*This thing is groovy, it simply draws a rotating tesseract projected onto 2d. Bringing
+the mouse over the tesseract generates a new random 4d rotation*/
+var canvas = document.getElementById("cMan");
+var ctx = canvas.getContext("2d");
+canvas.width  = canvas.offsetWidth;
+canvas.height = canvas.offsetHeight;
+var X = canvas.width, Y = canvas.height;
+var pi = Math.PI;
+
+/*============stuff for rendering/rotating cube============*/
+var zoom = 300;
+var points = [
+	[1,1,1,1],
+	[1,1,1,-1],
+	[1,1,-1,1],
+	[1,1,-1,-1],
+	[1,-1,1,1],
+	[1,-1,1,-1],
+	[1,-1,-1,1],
+	[1,-1,-1,-1],
+	[-1,1,1,1],
+	[-1,1,1,-1],
+	[-1,1,-1,1],
+	[-1,1,-1,-1],
+	[-1,-1,1,1],
+	[-1,-1,1,-1],
+	[-1,-1,-1,1],
+	[-1,-1,-1,-1]
+];
+var adj = [];
+
+for (var i=0;i<points.length;i++) {
+	adj[i] = [];
+	for (var j=0;j<points.length;j++) {
+		if (j<=i) {
+			adj[i][j] = 0;
+			continue;
+		}
+		var total = 0;
+		for (var k=0;k<points[j].length;k++) {
+			if (points[i][k]!=points[j][k]) total+=1;
+		}
+		adj[i][j] = (total==1) ? 1:0;
+	}
+}
+
+//draws a line between two points in R^2
+function drawLine(p1,p2) {
+	ctx.beginPath();
+	ctx.moveTo(Math.floor(p1[0]*zoom+X/2),Math.floor(-1*p1[1]*zoom+Y/2));
+	ctx.lineTo(Math.floor(p2[0]*zoom+X/2),Math.floor(-1*p2[1]*zoom+Y/2));
+	ctx.stroke();
+}
+
+
+function mag(p) {
+	return Math.sqrt(Math.pow(p[0],2)+Math.pow(p[1],2)+Math.pow(p[2],2));
+}
+function project(p) {
+	var b = 0.5/(2-p[3]);
+	return [b*p[0]/(b*mag(p)+0.5),b*p[2]/(b*mag(p)+0.5)];
+	//return [b*p[0],b*p[2]];
+}
+
+//calulate images of linear transformations
+function transform(T,v) {
+	var total;
+	var Tv = [];
+	for (var i=0;i<T.length;i++) {
+		total = 0;
+		for (var j=0;j<T[i].length;j++) {
+			total+=T[i][j]*v[j];
+		}
+		Tv[i] = total;
+	}
+	return Tv;
+}
+
+//multiply matrices
+function multiply(A,B) {
+	var C = [];
+	var total;
+	for (var i=0;i<A.length;i++) {
+		C[i] = [];
+		for (var j=0;j<B[i].length;j++) {
+			C[i][j] = 0;
+			for (var k=0;k<A[i].length;k++) {
+				C[i][j]+=A[i][k]*B[k][j];
+			}
+		}
+	}
+	return C;
+}
+//the next few functions are 'basic' rotations, letters following 'R'
+//indicate a plane in R^4 fixed by the rotation
+function Rxt(theta) {
+	return [[1,0,0,0],[0,Math.cos(theta),-1*Math.sin(theta),0],[0,Math.sin(theta),Math.cos(theta),0],[0,0,0,1]];
+} 
+
+function Ryt(theta) {
+	return [[Math.cos(theta),0,-1*Math.sin(theta),0],[0,1,0,0],[Math.sin(theta),0,Math.cos(theta),0],[0,0,0,1]];
+}
+
+function Rzt(theta) {
+	return [[Math.cos(theta),-1*Math.sin(theta),0,0],[Math.sin(theta),Math.cos(theta),0,0],[0,0,1,0],[0,0,0,1]];
+}
+
+function Rxy(theta) {
+	return [[1,0,0,0],[0,1,0,0],[0,0,Math.cos(theta),-1*Math.sin(theta)],[0,0,Math.sin(theta),Math.cos(theta)]];
+}
+
+function Rxz(theta) {
+	return [[1,0,0,0],[0,Math.cos(theta),0,-1*Math.sin(theta)],[0,0,1,0],[0,Math.sin(theta),0,Math.cos(theta)]];
+}
+
+function Ryz(theta) {
+	return [[Math.cos(theta),0,0,-1*Math.sin(theta)],[0,1,0,0],[0,0,1,0],[Math.sin(theta),0,0,Math.cos(theta)]];
+}
+var Rs = [Rxt,Ryt,Rzt,Rxy,Rxz,Ryz];
+var A = multiply(Rs[4](0.01),multiply(Rs[0](0.02),Rs[5](0.02)));
+
+//generate random rotation.
+function randomR(m) {
+	var n,tmp;
+	var a = [];
+	for (var i=0;i<m;i++) {
+		a[i] = i;
+	}
+	for (var i=0;i<a.length;i++) {
+		n = Math.floor(m*Math.random());
+		tmp = a[i];
+		a[i] = a[n];
+		a[n] = tmp;
+	}
+	var B = [[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
+	for (var i=0;i<a.length;i++) {
+		B = multiply(Rs[a[i]](0.02*Math.random()),B);
+	}
+	return B;
+}
+
+function beginAnimate() {
+	function go() {
+		ctx.clearRect(0,0,X,Y);
+		for (var i=0;i<points.length;i++) {
+			points[i] = transform(A,points[i]);
+		}
+		for (var i=0;i<points.length;i++) {
+			for (var j=0;j<points.length;j++) {
+				if (adj[i][j]==1)
+					drawLine(project(points[i]),project(points[j]));
+			}
+		}
+	}
+	
+	id=setInterval(go,20);
+}
+
+//render cube in initial position
+for (var i=0;i<points.length;i++) {
+	for (var j=0;j<points.length;j++) {
+		if (adj[i][j]==1)
+			drawLine(project(points[i]),project(points[j]));
+	}
+}
+
+
+//set initial rotation to random element of SO(3) and begin!
+A = randomR(3);
+
+canvas.addEventListener("mouseover",function() {
+	A=randomR(6);
+});
+
+beginAnimate();
+
+</script>
+</body>
+</html>
