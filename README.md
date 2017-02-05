@@ -1,2 +1,2 @@
 # misc-html-JavaScript
-a bunch of miscellaneous things I've made with JavaScript and HTML
+Not a single project, but a bunch of misc things I've played around with over time. Each file should contain a brief description in its comments
